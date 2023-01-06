@@ -1,6 +1,8 @@
 #include <iostream>
 #include <windows.h>
 #include <tchar.h>
+#include <Shlobj_core.h>
+#include <pathcch.h>
 
 // Global constants.
 const SHORT CONSOLE_HEIGHT = 25;
@@ -103,18 +105,37 @@ int main()
     startupInfo.cb = sizeof(startupInfo);
     ZeroMemory(&processInformation, sizeof(processInformation));
 
-    if (!CreateProcess(
-        _T("C:\\Windows\\System32\\cmd.exe"),
-        NULL, // lpCommandLine
-        NULL, // lpProcessAttributes
-        NULL, // lpThreadAttributes
-        FALSE, // bInheritHandles
-        CREATE_NEW_PROCESS_GROUP,
-        NULL, // lpEnvironment
-        NULL, // lpCurrentDirectory
-        &startupInfo,
-        &processInformation
+    // Determine full path of cmd.exe
+    TCHAR cmdPath[MAX_PATH];
+    if (FAILED(
+        SHGetFolderPath(
+            NULL,
+            CSIDL_SYSTEM,
+            NULL,
+            0,
+            cmdPath)
     )) {
+        printLastError(_T("SHGetFolderPath failed with %d\n"));
+        return 1;
+    } else {
+        if (FAILED(PathCchAppend(cmdPath, MAX_PATH, _T("cmd.exe")))) {
+            printLastError(_T("PathCchAppend failed with %d\n"));
+            return 1;
+        }
+    }
+
+    if (!CreateProcess(
+         cmdPath,
+         NULL, // lpCommandLine
+         NULL, // lpProcessAttributes
+         NULL, // lpThreadAttributes
+         FALSE, // bInheritHandles
+         CREATE_NEW_PROCESS_GROUP,
+         NULL, // lpEnvironment
+         NULL, // lpCurrentDirectory
+         &startupInfo,
+         &processInformation
+     )) {
         printLastError(_T("CreateProcess failed with %d\n"));
         return 1;
     }
@@ -136,6 +157,9 @@ int main()
     };
 
     UnhookWinEvent(g_hook);
+
+    WaitForSingleObject(processInformation.hProcess, INFINITE);
+    CloseHandle(processInformation.hProcess);
 
     return 0;
 }
