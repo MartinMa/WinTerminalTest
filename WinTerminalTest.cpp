@@ -75,7 +75,7 @@ void CALLBACK HandleWinEvent(HWINEVENTHOOK hook, DWORD event, HWND hwnd, LONG id
     case EVENT_CONSOLE_UPDATE_SCROLL:
     {
         TCHAR output[1024];
-        _stprintf_s(output, 1024, _T("EVENT_CONSOLE_UPDATE_SCROLL: [dx: %o, dy: %o]\n"), idObject, idChild);
+        _stprintf_s(output, 1024, _T("EVENT_CONSOLE_UPDATE_SCROLL: [dx: %d, dy: %d]\n"), idObject, idChild);
         OutputDebugString(output);
         break;
     }
@@ -85,14 +85,14 @@ void CALLBACK HandleWinEvent(HWINEVENTHOOK hook, DWORD event, HWND hwnd, LONG id
     case EVENT_CONSOLE_START_APPLICATION:
     {
         TCHAR output[1024];
-        _stprintf_s(output, 1024, _T("EVENT_CONSOLE_START_APPLICATION: [Process ID: %o]\n"), idObject);
+        _stprintf_s(output, 1024, _T("EVENT_CONSOLE_START_APPLICATION: [Process ID: %u]\n"), idObject);
         OutputDebugString(output);
         break;
     }
     case EVENT_CONSOLE_END_APPLICATION:
     {
         TCHAR output[1024];
-        _stprintf_s(output, 1024, _T("EVENT_CONSOLE_END_APPLICATION: [Process ID: %o]\n"), idObject);
+        _stprintf_s(output, 1024, _T("EVENT_CONSOLE_END_APPLICATION: [Process ID: %u]\n"), idObject);
         OutputDebugString(output);
         break;
     }
