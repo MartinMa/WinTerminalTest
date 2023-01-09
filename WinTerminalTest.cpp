@@ -9,9 +9,32 @@ const SHORT CONSOLE_HEIGHT = 25;
 const SHORT CONSOLE_WIDTH = 80;
 
 // Global variables.
+HANDLE g_hFile;
 HANDLE g_hInputConsole = NULL;
 HANDLE g_hOutputConsole = NULL;
 HWINEVENTHOOK g_hook;
+
+void printLastError(const TCHAR* format)
+{
+    TCHAR message[1024];
+    _stprintf_s(message, 1024, format, GetLastError());
+    OutputDebugString(message);
+}
+
+void outputLogMessage(const TCHAR* message) {
+#if _DEBUG
+    OutputDebugString(message);
+#else
+    DWORD dwBytesWritten = 0;
+    WriteFile(
+        g_hFile,
+        message,
+        lstrlenW(message) * sizeof(TCHAR),
+        &dwBytesWritten,
+        NULL
+    );
+#endif
+}
 
 void CALLBACK HandleWinEvent(HWINEVENTHOOK hook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
@@ -38,7 +61,7 @@ void CALLBACK HandleWinEvent(HWINEVENTHOOK hook, DWORD event, HWND hwnd, LONG id
         }
 
         _stprintf_s(output, 1024, _T("EVENT_CONSOLE_CARET: [X: %d, Y: %d, Flags: %s]\n"), coord.X, coord.Y, flags.c_str());
-        OutputDebugString(output);
+        outputLogMessage(output);
         break;
     }
     case EVENT_CONSOLE_UPDATE_REGION:
@@ -54,7 +77,7 @@ void CALLBACK HandleWinEvent(HWINEVENTHOOK hook, DWORD event, HWND hwnd, LONG id
         coordEnd.Y = HIWORD(idChild);
 
         _stprintf_s(output, 1024, _T("EVENT_CONSOLE_UPDATE_REGION: [Left: %d, Top: %d, Right: %d, Bottom: %d]\n"), coordStart.X, coordStart.Y, coordStart.X, coordEnd.Y);
-        OutputDebugString(output);
+        outputLogMessage(output);
         break;
     }
     case EVENT_CONSOLE_UPDATE_SIMPLE:
@@ -69,49 +92,59 @@ void CALLBACK HandleWinEvent(HWINEVENTHOOK hook, DWORD event, HWND hwnd, LONG id
         SHORT wAttributes = HIWORD(idChild);
 
         _stprintf_s(output, 1024, _T("EVENT_CONSOLE_UPDATE_SIMPLE: [X: %d, X: %d, Char: %d, Attr: %d]\n"), coord.X, coord.Y, chUpdate, wAttributes);
-        OutputDebugString(output);
+        outputLogMessage(output);
         break;
     }
     case EVENT_CONSOLE_UPDATE_SCROLL:
     {
         TCHAR output[1024];
         _stprintf_s(output, 1024, _T("EVENT_CONSOLE_UPDATE_SCROLL: [dx: %d, dy: %d]\n"), idObject, idChild);
-        OutputDebugString(output);
+        outputLogMessage(output);
         break;
     }
     case EVENT_CONSOLE_LAYOUT:
-        OutputDebugString(_T("EVENT_CONSOLE_LAYOUT\n"));
+        outputLogMessage(_T("EVENT_CONSOLE_LAYOUT\n"));
         break;
     case EVENT_CONSOLE_START_APPLICATION:
     {
         TCHAR output[1024];
         _stprintf_s(output, 1024, _T("EVENT_CONSOLE_START_APPLICATION: [Process ID: %u]\n"), idObject);
-        OutputDebugString(output);
+        outputLogMessage(output);
         break;
     }
     case EVENT_CONSOLE_END_APPLICATION:
     {
         TCHAR output[1024];
         _stprintf_s(output, 1024, _T("EVENT_CONSOLE_END_APPLICATION: [Process ID: %u]\n"), idObject);
-        OutputDebugString(output);
+        outputLogMessage(output);
         break;
     }
     default:
-        OutputDebugString(_T("UNKNOWN EVENT\n"));
+        outputLogMessage(_T("UNKNOWN EVENT\n"));
         break;
     }
-}
-
-void printLastError(const TCHAR *format)
-{
-    TCHAR message[1024];
-    _stprintf_s(message, 1024, format, GetLastError());
-    OutputDebugString(message);
 }
 
 int main()
 {
     std::cout << "Console Event Test!\n";
+
+#if !_DEBUG
+    g_hFile = CreateFile(
+        _T("logfile.txt"),
+        GENERIC_WRITE,
+        0,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (g_hFile == INVALID_HANDLE_VALUE) {
+        printLastError(_T("CreateFile failed with %d\n"));
+        return 1;
+    }
+#endif
 
     if (!FreeConsole()) {
         printLastError(_T("FreeConsole failed with %d\n"));
@@ -219,6 +252,10 @@ int main()
 
     WaitForSingleObject(processInformation.hProcess, INFINITE);
     CloseHandle(processInformation.hProcess);
+
+#if !_DEBUG
+    CloseHandle(g_hFile);
+#endif
 
     return 0;
 }
