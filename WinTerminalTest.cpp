@@ -60,7 +60,7 @@ void CALLBACK HandleWinEvent(HWINEVENTHOOK hook, DWORD event, HWND hwnd, LONG id
             }
         }
 
-        _stprintf_s(output, 1024, _T("EVENT_CONSOLE_CARET: [X: %d, Y: %d, Flags: %s]\n"), coord.X, coord.Y, flags.c_str());
+        _stprintf_s(output, 1024, _T("EVENT_CONSOLE_CARET: [X: %d, Y: %d, Flags: %s]\r\n"), coord.X, coord.Y, flags.c_str());
         outputLogMessage(output);
         break;
     }
@@ -76,7 +76,7 @@ void CALLBACK HandleWinEvent(HWINEVENTHOOK hook, DWORD event, HWND hwnd, LONG id
         coordEnd.X = LOWORD(idChild);
         coordEnd.Y = HIWORD(idChild);
 
-        _stprintf_s(output, 1024, _T("EVENT_CONSOLE_UPDATE_REGION: [Left: %d, Top: %d, Right: %d, Bottom: %d]\n"), coordStart.X, coordStart.Y, coordStart.X, coordEnd.Y);
+        _stprintf_s(output, 1024, _T("EVENT_CONSOLE_UPDATE_REGION: [Left: %d, Top: %d, Right: %d, Bottom: %d]\r\n"), coordStart.X, coordStart.Y, coordStart.X, coordEnd.Y);
         outputLogMessage(output);
         break;
     }
@@ -91,43 +91,43 @@ void CALLBACK HandleWinEvent(HWINEVENTHOOK hook, DWORD event, HWND hwnd, LONG id
         SHORT chUpdate = LOWORD(idChild);
         SHORT wAttributes = HIWORD(idChild);
 
-        _stprintf_s(output, 1024, _T("EVENT_CONSOLE_UPDATE_SIMPLE: [X: %d, X: %d, Char: %d, Attr: %d]\n"), coord.X, coord.Y, chUpdate, wAttributes);
+        _stprintf_s(output, 1024, _T("EVENT_CONSOLE_UPDATE_SIMPLE: [X: %d, X: %d, Char: %d, Attr: %d]\r\n"), coord.X, coord.Y, chUpdate, wAttributes);
         outputLogMessage(output);
         break;
     }
     case EVENT_CONSOLE_UPDATE_SCROLL:
     {
         TCHAR output[1024];
-        _stprintf_s(output, 1024, _T("EVENT_CONSOLE_UPDATE_SCROLL: [dx: %d, dy: %d]\n"), idObject, idChild);
+        _stprintf_s(output, 1024, _T("EVENT_CONSOLE_UPDATE_SCROLL: [dx: %d, dy: %d]\r\n"), idObject, idChild);
         outputLogMessage(output);
         break;
     }
     case EVENT_CONSOLE_LAYOUT:
-        outputLogMessage(_T("EVENT_CONSOLE_LAYOUT\n"));
+        outputLogMessage(_T("EVENT_CONSOLE_LAYOUT\r\n"));
         break;
     case EVENT_CONSOLE_START_APPLICATION:
     {
         TCHAR output[1024];
-        _stprintf_s(output, 1024, _T("EVENT_CONSOLE_START_APPLICATION: [Process ID: %u]\n"), idObject);
+        _stprintf_s(output, 1024, _T("EVENT_CONSOLE_START_APPLICATION: [Process ID: %u]\r\n"), idObject);
         outputLogMessage(output);
         break;
     }
     case EVENT_CONSOLE_END_APPLICATION:
     {
         TCHAR output[1024];
-        _stprintf_s(output, 1024, _T("EVENT_CONSOLE_END_APPLICATION: [Process ID: %u]\n"), idObject);
+        _stprintf_s(output, 1024, _T("EVENT_CONSOLE_END_APPLICATION: [Process ID: %u]\r\n"), idObject);
         outputLogMessage(output);
         break;
     }
     default:
-        outputLogMessage(_T("UNKNOWN EVENT\n"));
+        outputLogMessage(_T("UNKNOWN EVENT\r\n"));
         break;
     }
 }
 
 int main()
 {
-    std::cout << "Console Event Test!\n";
+    std::cout << "Console Event Test!\r\n";
 
 #if !_DEBUG
     g_hFile = CreateFile(
@@ -141,18 +141,18 @@ int main()
     );
 
     if (g_hFile == INVALID_HANDLE_VALUE) {
-        printLastError(_T("CreateFile failed with %d\n"));
+        printLastError(_T("CreateFile failed with %d\r\n"));
         return 1;
     }
 #endif
 
     if (!FreeConsole()) {
-        printLastError(_T("FreeConsole failed with %d\n"));
+        printLastError(_T("FreeConsole failed with %d\r\n"));
         return 1;
     }
 
     if (!AllocConsole()) {
-        printLastError(_T("AllocConsole failed with %d\n"));
+        printLastError(_T("AllocConsole failed with %d\r\n"));
         return 1;
     }
 
@@ -160,19 +160,19 @@ int main()
     g_hOutputConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
     if (g_hInputConsole == INVALID_HANDLE_VALUE || g_hInputConsole == NULL || g_hOutputConsole == INVALID_HANDLE_VALUE || g_hOutputConsole == NULL) {
-        printLastError(_T("GetStdHandle failed with %d\n"));
+        printLastError(_T("GetStdHandle failed with %d\r\n"));
         return 1;
     }
 
     SMALL_RECT windowRect = { 0, 0, CONSOLE_WIDTH - 1, CONSOLE_HEIGHT - 1 };
     if (!SetConsoleWindowInfo(g_hOutputConsole, TRUE, &windowRect)) {
-        printLastError(_T("SetConsoleWindowInfo failed with %d\n"));
+        printLastError(_T("SetConsoleWindowInfo failed with %d\r\n"));
         return 1;
     }
 
     COORD bufferSize = { CONSOLE_WIDTH, CONSOLE_HEIGHT };
     if (!SetConsoleScreenBufferSize(g_hOutputConsole, bufferSize)) {
-        printLastError(_T("SetConsoleScreenBufferSize failed with %d\n"));
+        printLastError(_T("SetConsoleScreenBufferSize failed with %d\r\n"));
         return 1;
     }
 
@@ -186,7 +186,7 @@ int main()
         WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS
     );
     if (!g_hook) {
-        printLastError(_T("SetWinEventHook failed with %d\n"));
+        printLastError(_T("SetWinEventHook failed with %d\r\n"));
         return 1;
     }
 
@@ -207,11 +207,11 @@ int main()
             0,
             cmdPath)
     )) {
-        printLastError(_T("SHGetFolderPath failed with %d\n"));
+        printLastError(_T("SHGetFolderPath failed with %d\r\n"));
         return 1;
     } else {
         if (FAILED(PathCchAppend(cmdPath, MAX_PATH, _T("cmd.exe")))) {
-            printLastError(_T("PathCchAppend failed with %d\n"));
+            printLastError(_T("PathCchAppend failed with %d\r\n"));
             return 1;
         }
     }
@@ -228,7 +228,7 @@ int main()
          &startupInfo,
          &processInformation
      )) {
-        printLastError(_T("CreateProcess failed with %d\n"));
+        printLastError(_T("CreateProcess failed with %d\r\n"));
         return 1;
     }
 
@@ -239,7 +239,7 @@ int main()
     while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
     {
         if (bRet == -1) {
-            printLastError(_T("GetMessage failed with %d\n"));
+            printLastError(_T("GetMessage failed with %d\r\n"));
             return 1;
         }
         else {
